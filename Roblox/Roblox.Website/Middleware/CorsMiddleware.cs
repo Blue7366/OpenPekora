@@ -48,9 +48,12 @@ public class RobloxPlayerCorsMiddleware
         ctx.Response.Headers["Cross-Origin-Resource-Policy"] = "cross-origin";
         var allowedFrontendOrigin = Environment.GetEnvironmentVariable("FRONTEND_ORIGIN");
         var requestOrigin = ctx.Request.Headers.Origin.ToString();
+        var originAllowed = string.IsNullOrWhiteSpace(allowedFrontendOrigin) ||
+            string.Equals(requestOrigin, allowedFrontendOrigin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
+
         if (!string.IsNullOrWhiteSpace(allowedFrontendOrigin))
         {
-            if (string.Equals(requestOrigin, allowedFrontendOrigin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+            if (originAllowed)
             {
                 ctx.Response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
                 ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
@@ -61,6 +64,17 @@ public class RobloxPlayerCorsMiddleware
         {
             // Development fallback. Set FRONTEND_ORIGIN in production.
             ctx.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        }
+
+        if (HttpMethods.IsOptions(ctx.Request.Method) && originAllowed)
+        {
+            ctx.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
+            var requestedHeaders = ctx.Request.Headers["Access-Control-Request-Headers"].ToString();
+            if (!string.IsNullOrWhiteSpace(requestedHeaders))
+                ctx.Response.Headers["Access-Control-Allow-Headers"] = requestedHeaders;
+            ctx.Response.Headers["Access-Control-Max-Age"] = "600";
+            ctx.Response.StatusCode = StatusCodes.Status204NoContent;
+            return;
         }
         ctx.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
         ctx.Response.Headers["X-XSS-Protection"] = "1; mode=block";
