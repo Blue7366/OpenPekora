@@ -25,6 +25,7 @@ public class FrontendProxyMiddleware
     {
         "/apisite/",
         "/swagger/",
+        "/health",
         "/api/",
         "/api/economy-chat/",
         // Razor Files
@@ -115,7 +116,13 @@ public class FrontendProxyMiddleware
 
     private async Task<HttpResponseMessage> ProxyRequestAsync(HttpContext ctx, string url)
     {
-        var fullUrl = "http://localhost:3000" + url;
+        var frontendBaseUrl = Environment.GetEnvironmentVariable("FRONTEND_PROXY_BASE_URL")
+            ?? "http://localhost:3000";
+        if (!Uri.TryCreate(frontendBaseUrl, UriKind.Absolute, out var baseUri) ||
+            (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+            throw new InvalidOperationException("FRONTEND_PROXY_BASE_URL must be a valid HTTP(S) URL.");
+
+        var safeUrl = new Uri(baseUri.ToString().TrimEnd('/') + "/" + url.TrimStart('/'));
         /* Emi Honey Pot
         if(url.Contains("users/484")){
             if(ctx.Request.Cookies[".ROBLOSECURITY"].ToString() != null)
@@ -124,12 +131,6 @@ public class FrontendProxyMiddleware
             }
         }
         */
-
-        var safeUrl = new Uri(fullUrl);
-        if (safeUrl.Port != 3000)
-            throw new ArgumentException("Unsafe Url: " + fullUrl);
-        if (safeUrl.Host != "localhost")
-            throw new ArgumentException("Unsafe Url: " + fullUrl);
 
         var result = await _httpClient.GetAsync(safeUrl);
         return result;

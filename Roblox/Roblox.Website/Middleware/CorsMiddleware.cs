@@ -46,7 +46,22 @@ public class RobloxPlayerCorsMiddleware
         var isAuthenticated = ctx.Items.ContainsKey(SessionMiddleware.CookieName);
         ctx.Response.Headers["Cross-Origin-Opener-Policy"] = "same-origin";
         ctx.Response.Headers["Cross-Origin-Resource-Policy"] = "cross-origin";
-        ctx.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        var allowedFrontendOrigin = Environment.GetEnvironmentVariable("FRONTEND_ORIGIN");
+        var requestOrigin = ctx.Request.Headers.Origin.ToString();
+        if (!string.IsNullOrWhiteSpace(allowedFrontendOrigin))
+        {
+            if (string.Equals(requestOrigin, allowedFrontendOrigin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+            {
+                ctx.Response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
+                ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+                ctx.Response.Headers.Append("Vary", "Origin");
+            }
+        }
+        else
+        {
+            // Development fallback. Set FRONTEND_ORIGIN in production.
+            ctx.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        }
         ctx.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
         ctx.Response.Headers["X-XSS-Protection"] = "1; mode=block";
         ctx.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";

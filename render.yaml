@@ -1,0 +1,97 @@
+services:
+  - type: web
+    name: kandi-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+      - key: BaseUrl
+        sync: false
+      - key: Postgres
+        sync: false
+      - key: Redis
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: FRONTEND_PROXY_BASE_URL
+        sync: false
+      - key: Authorization
+        sync: false
+      - key: GameServerAuthorization
+        sync: false
+      - key: BotAuthorization
+        sync: false
+      - key: RccAuthorization
+        sync: false
+      - key: ArbiterAuthorization
+        sync: false
+      - key: GameServerIp
+        value: 127.0.0.1
+      - key: UserAgentBypassSecret
+        sync: false
+      - key: VerificationSecret
+        sync: false
+      - key: Jwt__Sessions
+        generateValue: true
+      - key: HCaptcha__Public
+        value: "10000000-ffff-ffff-ffff-000000000001"
+      - key: HCaptcha__Private
+        sync: false
+      - key: Discord__ClientId
+        value: ""
+      - key: Discord__ClientSecret
+        value: ""
+      - key: Discord__GuildId
+        value: ""
+      - key: Discord__BotToken
+        value: ""
+      - key: Discord__LogChannelId
+        value: ""
+      - key: AssetValidation__BaseUrl
+        value: http://127.0.0.1:4300
+      - key: AssetValidation__Authorization
+        sync: false
+      - key: Twitter__Bearer
+        value: ""
+      - key: CdnBaseUrl
+        value: ""
+      - key: Directories__Storage
+        value: /app/storage/
+      - key: Directories__Asset
+        value: /app/storage/asset/
+      - key: Directories__Public
+        value: /app/api/public/
+      - key: Directories__Thumbnails
+        value: /app/api/public/images/thumbnails/
+      - key: Directories__GroupIcons
+        value: /app/api/public/images/groups/
+      - key: Directories__XmlTemplates
+        value: /app/Roblox/Roblox.Libraries/Templates/
+      - key: Directories__JsonData
+        value: /app/Roblox/Roblox.Libraries/Json/
+      - key: Directories__ScriptsData
+        value: /app/scripts/
+      - key: Directories__AdminBundle
+        value: /app/admin/public/
+      - key: Directories__EconomyChatBundle
+        value: /app/economy-chat/build/
+      - key: Directories__RCCLuaScripts
+        value: /app/rcc-lua/
+      - key: PackageShirtAssetId
+        value: "-1"
+      - key: PackagePantsAssetId
+        value: "-1"
+      - key: OwnerUserId__0
+        value: "1"
+      - key: SignupAssetIds__0
+        value: "0"
+      - key: SignupAvatarAssetIds__0
+        value: "0"
+      - key: AllowedHosts
+        value: "*"
