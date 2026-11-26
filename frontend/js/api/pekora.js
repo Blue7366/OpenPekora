@@ -333,7 +333,8 @@
   A.define("account", {
     get: simple("/accountinformation/v1/description", "GET", {
       adapt: function (r) { return { about: r && r.description || "", description: r && r.description || "" }; }
-    })
+    }),
+    changeUsername: simple("/auth/v1/username", "POST", { prepare: function (o) { var b=o.body||{}; return { body: { username: b.newUsername || b.username, password: b.password } }; } })
   });
 
   A.define("ads", {
