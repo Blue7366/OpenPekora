@@ -23,6 +23,8 @@ public class FrontendProxyMiddleware
 
     public static List<string> BypassUrls = new()
     {
+        // Pekora JSON API controllers must be handled by ASP.NET, never by the legacy frontend proxy.
+        "/apisite/",
         "/apisite/",
         "/swagger/",
         "/health",
