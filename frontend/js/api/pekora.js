@@ -126,18 +126,18 @@
     }),
     search: page("users.search", "/users/v1/usernames/users", "POST", {
       body: function (o) { var q = o.query || {}; return { usernames: [String(q.q || "").trim()] }; },
-      items: function (r) { return arr(r, ["data"]); }, map: row
+      noMore: true, items: function (r) { return arr(r, ["data"]); }, map: row
     }),
     usernameHistory: page("users.usernameHistory", "/users/v1/users/{userId}/username-history", "GET", {
       params: idParams, query: function (q) { return { limit: q.limit || 20, cursor: q.cursor }; },
       map: function (x) { return row({ id: x.username, name: x.username, meta: x.created || "" }); }
     }),
-    friends: page("users.friends", "/friends/v1/users/{userId}/friends", "GET", { params: idParams, map: row }),
+    friends: page("users.friends", "/friends/v1/users/{userId}/friends", "GET", { params: idParams, noMore: true, map: row }),
     groups: page("users.groups", "/groups/v1/users/{userId}/groups/roles", "GET", {
       params: idParams, noMore: true, items: function (r) { return arr(r, ["data"]); },
       map: function (x) { return row(Object.assign({}, x.group || {}, { meta: x.role && x.role.name ? x.role.name : "" })); }
     }),
-    badges: page("users.badges", "/badges/v1/users/{userId}/badges", "GET", { params: idParams, map: row }),
+    badges: page("users.badges", "/badges/v1/users/{userId}/badges", "GET", { params: idParams, noMore: true, map: row }),
     inventory: page("users.inventory", "/inventory/v1/users/{userId}/assets/collectibles", "GET", { params: idParams, map: item }),
     collectibles: page("users.collectibles", "/inventory/v1/users/{userId}/assets/collectibles", "GET", { params: idParams, map: item })
   });
@@ -202,7 +202,7 @@
 
   A.define("inventory", {
     list: page("inventory.list", "/inventory/v1/users/{userId}/assets/collectibles", "GET", {
-      params: selfParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "desc" }; }, map: item
+      params: selfParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "desc" }; }, map: tradeItem
     }),
     collectibles: page("inventory.collectibles", "/inventory/v1/users/{userId}/assets/collectibles", "GET", {
       params: selfParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "desc" }; }, map: item
@@ -214,7 +214,7 @@
     getBody: simple("/avatar/v1/avatar", "GET"),
     items: page("avatar.items", "/avatar/v1/recent-items/{recentType}/list", "GET", {
       params: function (p, o) { var tab = (o.query && o.query.tab) || "Hats"; return { recentType: tab.charAt(0).toUpperCase() + tab.slice(1) }; },
-      map: item
+      noMore: true, map: item
     }),
     outfits: page("avatar.outfits", "/avatar/v1/users/{userId}/outfits", "GET", {
       params: selfParams, query: function (q, o, pageNo) { return { itemsPerPage: q.limit || 20, page: pageNo }; },
@@ -234,7 +234,7 @@
 
   A.define("groups", {
     mine: page("groups.mine", "/groups/v1/users/{userId}/groups/roles", "GET", {
-      params: selfParams, items: function (r) { return arr(r, ["data"]); },
+      params: selfParams, noMore: true, items: function (r) { return arr(r, ["data"]); },
       map: function (x) { return row(Object.assign({}, x.group || {}, { meta: x.role && x.role.name ? x.role.name : "" })); }
     }),
     search: page("groups.search", "/groups/v1/groups/search", "GET", {
@@ -276,10 +276,10 @@
       items: function (r) { return arr(r, ["collection", "data", "messages"]); }, map: row
     }),
     get: simple("/privatemessages/v1/messages/{messageId}", "GET", { params: function (p) { return { messageId: p.messageId || p.id }; }, adapt: function (x) { return row({ id: x.id, name: x.subject, subtitle: x.body, meta: x.sender && x.sender.name }); } }),
-    send: simple("/privatemessages/v1/messages/send", "POST"),
-    markUnread: simple("/privatemessages/v1/messages/mark-unread", "POST"),
-    archive: simple("/privatemessages/v1/messages/archive", "POST"),
-    unarchive: simple("/privatemessages/v1/messages/unarchive", "POST")
+    send: simple("/privatemessages/v1/messages/send", "POST", { adapt: function (r) { if (r && r.success === false) throw new A.ApiError(400, r.message || "Message could not be sent.", null, "http"); return r; } }),
+    markUnread: simple("/privatemessages/v1/messages/mark-unread", "POST", { prepare: function (o) { return { body: o.body || { messageIds: [+(o.params && (o.params.id || o.params.rowId))] } }; } }),
+    archive: simple("/privatemessages/v1/messages/archive", "POST", { prepare: function (o) { return { body: o.body || { messageIds: [+(o.params && (o.params.id || o.params.rowId))] } }; } }),
+    unarchive: simple("/privatemessages/v1/messages/unarchive", "POST", { prepare: function (o) { return { body: o.body || { messageIds: [+(o.params && (o.params.id || o.params.rowId))] } }; } })
   });
 
   A.define("trades", {
@@ -291,10 +291,13 @@
       params: tradeParams,
       adapt: function (r) {
         var offers = r.offers || [], other = offers.filter(function (x) { return x.user && x.user.id !== currentUserId; })[0] || offers[1] || {};
+        if (other.user && other.user.id != null) activeTradePartnerId = other.user.id;
         var mine = offers.filter(function (x) { return x.user && x.user.id === currentUserId; })[0] || offers[0] || {};
         return { partnerId: other.user && other.user.id, offerItems: (mine.userAssets || []).map(item), requestItems: (other.userAssets || []).map(item), offerRobux: mine.robux || 0, requestRobux: other.robux || 0, title: "Trade #" + r.id, name: "Trade #" + r.id, stats: [["Status", r.status || ""], ["Partner", other.user && other.user.name || ""]] };
       }
     }),
+    create: simple("/trades/v1/trades/send", "POST", { prepare: function (o) { var b=o.body||{}, partner=+(o.params && o.params.userId || 0); return { body: { offers: [{ userId: currentUserId, userAssetIds: b.offerItems || [], robux: +(b.offerRobux||0) }, { userId: partner, userAssetIds: b.requestItems || [], robux: +(b.requestRobux||0) }] } }; } }),
+    counter: simple("/trades/v1/trades/{tradeId}/counter", "POST", { params: tradeParams, prepare: function (o) { var b=o.body||{}, partner=+(o.params && o.params.partnerId || activeTradePartnerId || 0); return { body: { offers: [{ userId: currentUserId, userAssetIds: b.offerItems || [], robux: +(b.offerRobux||0) }, { userId: partner, userAssetIds: b.requestItems || [], robux: +(b.requestRobux||0) }] } }; } }),
     accept: simple("/trades/v1/trades/{tradeId}/accept", "POST", { params: tradeParams }),
     decline: simple("/trades/v1/trades/{tradeId}/decline", "POST", { params: tradeParams })
   });
