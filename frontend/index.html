@@ -62,7 +62,7 @@ input,textarea{width:100%;background:#fff;color:#222;border:1px solid #ccc;borde
   window.addEventListener("hashchange", view);
   view();
   // Existing Pekora sessions go straight to the Kandi app; anonymous visitors see this landing page.
-  if (window.KandiAPI) window.KandiAPI.me().then(function () { location.replace("app.html#home"); }).catch(function () {});
+  if (window.KandiAPI) window.KandiAPI.me().then(function () { location.replace("app.html#home"); }).catch(function (e) { if (e && e.kind === "format") location.replace("/auth/application"); });
 })();
 </script>
 </body>
