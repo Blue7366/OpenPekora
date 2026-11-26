@@ -47,6 +47,9 @@ input,textarea{width:100%;background:#fff;color:#222;border:1px solid #ccc;borde
 </section>
 </main>
 <div id="tb" hidden>TEST MODE</div>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/api/auth.js"></script>
 <script>
 (function () {
   function view() {
@@ -58,6 +61,8 @@ input,textarea{width:100%;background:#fff;color:#222;border:1px solid #ccc;borde
   }
   window.addEventListener("hashchange", view);
   view();
+  // Existing Pekora sessions go straight to the Kandi app; anonymous visitors see this landing page.
+  if (window.KandiAPI) window.KandiAPI.me().then(function () { location.replace("app.html#home"); }).catch(function () {});
 })();
 </script>
 </body>
