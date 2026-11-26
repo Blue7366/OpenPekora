@@ -242,4 +242,5 @@ app.UseWebSockets();
 app.UseRequestDecompression();
 app.MapHub<MessageRouterHub>("/v1/router/signalr");
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/home", () => Results.Redirect("/app.html#home"));
 app.Run();
