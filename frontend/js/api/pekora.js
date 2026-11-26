@@ -139,7 +139,7 @@
     }),
     badges: page("users.badges", "/badges/v1/users/{userId}/badges", "GET", { params: idParams, noMore: true, map: row }),
     inventory: page("users.inventory", "/inventory/v1/users/{userId}/assets/collectibles", "GET", { params: idParams, map: item }),
-    collectibles: page("users.collectibles", "/inventory/v1/users/{userId}/assets/collectibles", "GET", { params: idParams, map: item })
+    collectibles: page("users.collectibles", "/inventory/v1/users/{userId}/assets/collectibles", "GET", { params: idParams, map: tradeItem })
   });
 
   A.define("friends", {
@@ -202,10 +202,10 @@
 
   A.define("inventory", {
     list: page("inventory.list", "/inventory/v1/users/{userId}/assets/collectibles", "GET", {
-      params: selfParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "desc" }; }, map: tradeItem
+      params: selfParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "desc" }; }, map: item
     }),
     collectibles: page("inventory.collectibles", "/inventory/v1/users/{userId}/assets/collectibles", "GET", {
-      params: selfParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "desc" }; }, map: item
+      params: selfParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "desc" }; }, map: tradeItem
     })
   });
 
