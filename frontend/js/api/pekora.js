@@ -2,7 +2,7 @@
 // Only routes present in Roblox/Roblox.Website/Controllers/v1 are enabled here.
 (function () {
   "use strict";
-  var A = window.KandiAPI, E = A.E, currentUserId = null, cursors = Object.create(null);
+  var A = window.KandiAPI, E = A.E, currentUserId = null, activeTradePartnerId = null, cursors = Object.create(null);
 
   function selfParams(p) { return { userId: p.userId != null ? p.userId : (p.id != null ? p.id : currentUserId) }; }
   function idParams(p) { return { userId: p.userId != null ? p.userId : p.id }; }
@@ -43,6 +43,7 @@
       href: x.href || ""
     };
   }
+  function tradeItem(x) { var y = item(x); y.id = x && (x.userAssetId != null ? x.userAssetId : y.id); return y; }
   function game(x) {
     x = x || {};
     return {
@@ -170,7 +171,7 @@
       items: function (r) { return arr(r, ["games"]); }, map: game
     }),
     badges: page("games.badges", "/badges/v1/universes/{universeId}/badges", "GET", {
-      params: function (p) { return { universeId: p.universeId || p.id }; }, map: row
+      params: function (p) { return { universeId: p.universeId || p.id }; }, noMore: true, map: row
     }),
     thumbnails: page("games.thumbnails", "/thumbnails/v1/games/icons", "GET", {
       query: function (q, o) { return { universeIds: (o.params && (o.params.id || o.params.universeId)) || q.universeIds || "" }; },
@@ -317,7 +318,7 @@
   });
 
   A.define("membership", {
-    get: simple("/premiumfeatures/v1/users/{userId}/subscriptions", "GET", { params: selfParams })
+    get: simple("/premiumfeatures/v1/users/{userId}/subscriptions", "GET", { params: selfParams, adapt: function (r) { var m=r && r.subscriptionProductModel || {}; return { title: "Membership", name: "Membership", stats: [["Plan", m.subscriptionTypeName], ["Robux stipend", m.robuxStipendAmount], ["Expires", m.expiration]].filter(function (x) { return x[1] != null; }) }; } })
   });
 
   A.define("site", {
