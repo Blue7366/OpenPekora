@@ -244,7 +244,7 @@
       adapt: function (x) { return { title: x.name || "", name: x.name || "", description: x.description || "", thumbnail: x.icon || x.thumbnail || "", stats: [["Members", x.memberCount]].filter(function (v) { return v[1] != null; }) }; }
     }),
     members: page("groups.members", "/groups/v1/groups/{groupId}/users", "GET", { params: groupParams, query: function (q) { return { limit: q.limit || 24, cursor: q.cursor, sortOrder: "asc" }; }, map: row }),
-    roles: page("groups.roles", "/groups/v1/groups/{groupId}/roles", "GET", { params: groupParams, items: function (r) { return arr(r, ["roles"]); }, map: row }),
+    roles: page("groups.roles", "/groups/v1/groups/{groupId}/roles", "GET", { params: groupParams, noMore: true, items: function (r) { return arr(r, ["roles"]); }, map: row }),
     auditLog: page("groups.auditLog", "/groups/v1/groups/{groupId}/audit-log", "GET", { params: groupParams, query: function (q) { return { limit: q.limit || 20, cursor: q.cursor }; }, map: row }),
     create: simple("/groups/v1/groups/create", "POST"),
     join: simple("/groups/v1/groups/{groupId}/users", "POST", { params: groupParams }),
