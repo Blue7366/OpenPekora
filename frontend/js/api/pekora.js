@@ -330,4 +330,31 @@
     })
   });
 
+  A.define("account", {
+    get: simple("/accountinformation/v1/description", "GET", {
+      adapt: function (r) { return { about: r && r.description || "", description: r && r.description || "" }; }
+    })
+  });
+
+  A.define("ads", {
+    serve: simple("/ads/v1/sponsored-pages", "GET", { adapt: function (r) { return { items: arr(r, ["data"]) }; } }),
+    mine: page("ads.mine", "/ads/v1/user-ads/User/{creatorId}", "GET", {
+      params: function () { return { creatorId: currentUserId }; }, map: row
+    })
+  });
+
+  A.define("library", {
+    search: page("library.search", "/catalog/v1/search/items", "GET", {
+      query: function (q) { return { keyword: q.q || q.keyword || undefined, category: q.category || undefined, limit: q.limit || 24, cursor: q.cursor }; },
+      items: function (r) { return arr(r, ["data", "items"]); }, map: item
+    }),
+    get: simple("/catalog/v1/catalog/items/details", "POST", {
+      prepare: function (o) { return { body: { items: [{ id: (o.params && (o.params.id || o.params.assetId)) }] } }; },
+      adapt: function (r) { var x=arr(r, ["data"])[0]||{}; return { title:x.name||"", name:x.name||"", description:x.description||"", thumbnail:x.thumbnail||x.imageUrl||"" }; }
+    }),
+    favorite: simple("/catalog/v1/favorites/users/{userId}/assets/{assetId}/favorite", "POST", {
+      params: function (p) { return { userId: currentUserId, assetId: p.assetId || p.id }; }
+    })
+  });
+
 })();
