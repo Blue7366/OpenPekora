@@ -6,14 +6,11 @@ window.KANDI_CONFIG = {
   API_BASE: "/apisite",        // Prefixo confirmado dos controllers ASP.NET do Pekora.
   SERVICES: { default: "" },   // URL base por serviço (vazio = usa API_BASE). Ex.: { default: "https://api.seudominio.com", avatar: "https://avatar.seudominio.com" }. Preencher após ler o Program.cs do backend.
   CSRF: { header: "x-csrf-token", retryStatus: 403 },   // Confirmado em CsrfMiddleware.cs: cookie HttpOnly + header x-csrf-token no desafio 403.
-  // Como a sessão é enviada ao backend. NÃO VERIFICADO — definir só depois de ler a autenticação do PekoraSource:
-  //   "unset"  (padrão) = não envia credenciais nem Authorization (cross-origin) — chamadas autenticadas vão receber 401.
-  //   "cookie" = sessão por cookie (fetch com credentials: include; o backend precisa liberar o CORS com credenciais).
-  //   "token"  = Authorization: Bearer <token> guardado no localStorage (menos seguro contra XSS; use só se o backend emitir esse token).
+  // Sessão Pekora: cookie HttpOnly .PEKOSECURITY na mesma origem; o navegador o envia automaticamente.
   AUTH_MODE: "cookie",
   TOKEN_KEY: "kandi_token",
   // API base e CSRF foram confirmados no código; autenticação JSON ainda não existe no Pekora.
-  CONFIRMED: { api: true, auth: false, csrf: true },
+  CONFIRMED: { api: true, auth: true, csrf: true },
   TIMEOUT_MS: 10000,
   UPLOAD_TIMEOUT_MS: 120000,   // uploads (FormData) podem demorar mais
   PAGE_SIZE: 24,
