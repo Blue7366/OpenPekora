@@ -2,36 +2,45 @@
 
 ## Architecture
 
-- The Kandi static frontend lives in /frontend in this repository.
-- The ASP.NET Core Pekora website serves frontend/index.html at / and the other frontend files from the same origin.
-- Requests under /apisite/ are handled by Pekora MVC controllers.
-- Requests under /auth/ continue to use Pekora Razor Pages. This intentionally preserves the existing application/approval flow, CAPTCHA checks, password validation, rate limits, 2FA, anti-forgery validation and session-cookie creation.
-- Pekora's .PEKOSECURITY session cookie remains HttpOnly and same-site. Kandi uses same-origin requests with cookie credentials; it does not store passwords or issue its own session token.
-- Pekora's CSRF middleware remains enabled. Kandi's transport reads the x-csrf-token response header after the backend's 403 challenge and retries the write once.
+- Kandi is served as static files by the same ASP.NET Core application as Pekora.
+- Browser requests use the same origin and the existing Pekora HttpOnly session cookie (.PEKOSECURITY).
+- /apisite/ requests are routed to Pekora MVC controllers, not to the legacy frontend proxy.
+- Login and account applications remain on Pekora's original Razor flow. No replacement auth system or Kandi-issued session token is introduced.
+- CSRF protection remains enabled; the shared API transport retains the x-csrf-token challenge/retry behavior.
+- The root Docker image includes frontend/; a separate Node frontend server is not required.
 
-## Docker
+## Connected to verified controller routes
 
-The root Dockerfile copies frontend/ into the runtime image. The directory is no longer excluded by .dockerignore. No separate Node frontend server or FRONTEND_PROXY_BASE_URL is required for the Kandi site.
+- Session and profile: authenticated user, user details, username search/history, user groups, friends, badges and collectible inventory.
+- Friends: friend lists, requests, accept/decline, unfriend and follow.
+- Games: game list/search, universe details, recommendations, voting, badges and game icon thumbnails.
+- Catalog/library: catalog search, item details, favorites, resellers and read-only library search/details.
+- Avatar: current avatar, recent items, outfits, wear/remove assets, wear/update/rename/delete/create outfits, redraw, body scales and avatar type.
+- Groups: search, details, members, roles, audit log, join/leave, primary group, description, icon, role management, member role changes, ownership transfer, payouts and wall posting.
+- Messages: inbox listing, unread count, message details, sending, marking unread and archive/unarchive.
+- Trades: inbound/outbound/completed/inactive lists, details, create, counter, accept and decline.
+- Economy: current currency balance and item reseller listings.
+- Other verified read routes: current membership subscription, account description, username change, ad listing and public announcements.
 
-FRONTEND_PROXY_BASE_URL remains an optional compatibility setting for deployments that intentionally keep an older external frontend. If it is unset, unmatched requests continue through ASP.NET routing instead of attempting localhost:3000.
+## Intentionally not connected
 
-## Connected now
+These Kandi methods have no matching implemented Pekora controller route, or the current UI does not send the complete request contract. They remain unavailable rather than being pointed at guessed endpoints:
 
-- Static Kandi site is served by the same ASP.NET application.
-- Kandi's current-user lookup calls the verified Pekora endpoint GET /apisite/users/v1/users/authenticated and adapts its id/name/displayName/isStaff response.
-- The Kandi landing page sends login and account applications to Pekora's existing /auth/accountlogin and /auth/application pages. The frontend does not bypass the backend's signup and approval rules.
-- The API base is same-origin /apisite; the CSRF header name is verified against CsrfMiddleware.cs.
+- JSON login, signup and logout; account applications continue through the original Pekora Razor flow.
+- Catalog purchases (the UI purchase modal does not yet send the required expected seller, price and currency contract), comments, sales history and recommendations.
+- Game joining, server lists and game favorites.
+- Group wall reading and group game lists.
+- Avatar body colors (Kandi uses color inputs, while Pekora requires validated BrickColor IDs), chat conversations, feed, notifications, promo codes, referral rewards and reports.
+- Email/password changes, combined account privacy settings and account deletion.
+- Economy transaction history/exchanges and membership product purchases. Pekora's products endpoint currently throws NotImplementedException.
+- Ad creation/sponsorship management and developer upload workflows.
 
-## Not yet connected
+Do not simulate purchases, balances, trade outcomes, moderation, or application approval. Features listed above must be implemented against real backend contracts before enabling their UI actions.
 
-The other Kandi API modules still contain unconnected method definitions. They must be mapped one by one to real Pekora controller routes and response shapes before those features can be considered operational. Do not enable demo/stub mode in production and do not simulate balances, purchases, trades, inventory, or moderation actions.
+## Security and deployment
 
-The original Pekora auth API controller does not expose JSON login/signup endpoints. Login, signup and applications therefore remain on the existing Razor flow until a carefully reviewed server-side bridge can reuse the exact same validation and security services.
-
-## Deployment requirements
-
-A production deployment still needs real environment values for PostgreSQL, Redis, base URL, JWT session signing key, CAPTCHA, Discord integration (if enabled), storage directories, and any game/RCC/asset-validation services required by the chosen feature set. Put secrets in the VPS environment or secret manager, never in Git. Use HTTPS and persistent volumes for storage/database data.
+Keep CAPTCHA, password verification, 2FA, session signing keys, database credentials and Discord secrets on the server. Configure PostgreSQL, Redis, storage volumes, base URL and HTTPS in the VPS environment. Never commit secrets or private keys.
 
 ## Verification status
 
-This branch has not yet been built or run against a configured database/Redis/VPS. Docker compilation, health checks, session round-trip, CSRF retry, and each connected feature must pass before merging to main or calling the deployment production-ready.
+The JavaScript API transport and adapter files passed syntax checks and adapter initialization checks. This does not replace a .NET solution build or live integration test. The branch still needs a successful GitHub Actions build, and a configured VPS is required to verify database/Redis connectivity, login/session round-trip, CSRF, uploads and each feature against real data before merging to main or calling it production-ready.
