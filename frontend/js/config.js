@@ -1,9 +1,9 @@
 // Project Kandi - configuração central. É o único arquivo que você precisa editar para ligar o backend.
-// Nada aqui está confirmado contra o PekoraSource: os campos marcados "NÃO VERIFICADO" devem ser conferidos na integração real.
+// Configuração de produção inicial: mesma origem do Pekora. Recursos sem rota verificada continuam explicitamente desconectados.
 window.KANDI_CONFIG = {
   TEST_MODE: false,         // true = MODO TESTE: nada é real, tudo é simulação local (dados "Teste", ações simuladas, sem rede). false = usa a API abaixo (backend real).
   USE_STUB: false,         // só com DEMO:false. true = usa a API de teste local do server.py (--mock-api) para os métodos legados. NUNCA é o PekoraSource.
-  API_BASE: "/apisite",        // NÃO VERIFICADO. Ex.: "https://api.seudominio.com". Com o server.py --mock-api use "/api".
+  API_BASE: "/apisite",        // Prefixo confirmado dos controllers ASP.NET do Pekora.
   SERVICES: { default: "" },   // URL base por serviço (vazio = usa API_BASE). Ex.: { default: "https://api.seudominio.com", avatar: "https://avatar.seudominio.com" }. Preencher após ler o Program.cs do backend.
   CSRF: { header: "x-csrf-token", retryStatus: 403 },   // Confirmado em CsrfMiddleware.cs: cookie HttpOnly + header x-csrf-token no desafio 403.
   // Como a sessão é enviada ao backend. NÃO VERIFICADO — definir só depois de ler a autenticação do PekoraSource:
@@ -12,7 +12,7 @@ window.KANDI_CONFIG = {
   //   "token"  = Authorization: Bearer <token> guardado no localStorage (menos seguro contra XSS; use só se o backend emitir esse token).
   AUTH_MODE: "cookie",
   TOKEN_KEY: "kandi_token",
-  // Marque como true SOMENTE depois de confirmar contra o PekoraSource rodando. Só apaga o aviso de integração; não muda o comportamento.
+  // API base e CSRF foram confirmados no código; autenticação JSON ainda não existe no Pekora.
   CONFIRMED: { api: true, auth: false, csrf: true },
   TIMEOUT_MS: 10000,
   UPLOAD_TIMEOUT_MS: 120000,   // uploads (FormData) podem demorar mais
@@ -20,7 +20,7 @@ window.KANDI_CONFIG = {
   APP_URL: "app.html",         // usado pela tela de login para abrir o site logado
   LANDING_URL: "index.html",   // tela de login/cadastro (para onde o Log Out e o 401 voltam)
   DISCORD_INVITE: "#",         // link do convite do servidor Discord (rodapé). "#" = ainda não configurado (o link aparece desativado)
-  DISCORD_URL: "/discordverify",   // NÃO VERIFICADO: URL do backend que inicia a verificação (OAuth feito pelo servidor; nenhum segredo no navegador)
+  DISCORD_URL: "/auth/discord",   // Fluxo Discord original do Pekora; OAuth e segredos permanecem no servidor.
   REQUIRE_DISCORD: true,       // exige verificação do Discord no cadastro (modo real). A decisão final é SEMPRE do servidor.
   BANNER: "Found a bug on Project Kandi? Then click on this message to report it and get rewards!",
   BUG_URL: "#",                // "#" = ainda não configurado (o banner aparece sem link)
