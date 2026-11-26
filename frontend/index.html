@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project Kandi</title>
+<meta name="description" content="Project Kandi. Powering Nostalgia.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/favicon-192.png">
+<meta property="og:type" content="website"><meta property="og:title" content="Project Kandi"><meta property="og:description" content="Project Kandi. Powering Nostalgia.">
+<!-- TODO: og:image/twitter:image precisam de URL absoluta do domínio final (ex.: https://SEU-DOMINIO/assets/og-image.jpg) para a prévia funcionar em redes sociais. -->
+<meta property="og:image" content="assets/og-image.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="assets/og-image.jpg">
+<style>
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%}
+body{background:#202328;color:#fff;font:15px/1.5 Roboto,"Segoe UI",Arial,sans-serif;-webkit-text-size-adjust:100%}
+.tabs{position:sticky;top:0;z-index:5;display:flex;background:#2b2f36;border-bottom:1px solid #3a3f48;padding-top:env(safe-area-inset-top,0px)}
+.tabs a{flex:1;text-align:center;padding:15px 8px;color:#b9bec7;font-weight:500;text-decoration:none;border-bottom:3px solid transparent}.tabs a.on{color:#fff;border-color:#e0509c}
+.hero{position:relative;height:min(52vw,420px);min-height:210px;background:#111 url(assets/og-image.jpg) center/cover}.hero b{position:absolute;left:16px;bottom:14px;font-size:clamp(30px,8vw,56px);text-shadow:0 2px 10px #000}
+main{max-width:520px;margin:0 auto;padding:24px 18px 60px}h1,h2{font-weight:500;margin:0 0 12px;text-align:center}h2{font-size:21px}
+p{margin:8px 0}.mu{color:#aeb4bd;font-size:13px}form{display:flex;flex-direction:column;gap:12px}label{font-weight:500}
+input,textarea{width:100%;background:#fff;color:#222;border:1px solid #ccc;border-radius:4px;padding:11px;font:inherit}textarea{min-height:90px}
+.btn{border:0;border-radius:4px;background:#0d6efd;color:#fff;padding:12px 16px;font:500 16px Roboto,Arial;cursor:pointer;text-align:center;text-decoration:none;display:inline-block}.btn:disabled{opacity:.55;cursor:default}.btn.s{padding:6px 12px;font-size:13px}
+.bx{background:#cfe3ff;color:#16345c;padding:12px;border-radius:4px;word-break:break-all;font-weight:500}.al{padding:10px 12px;border-radius:4px;background:#5a2330;border:1px solid #a1213a;margin-bottom:12px}.al.ok{background:#1e4a33;border-color:#2f8f5b}
+.st{margin:26px 0 8px;font-size:18px;font-weight:500}.c{text-align:center}hr{border:0;border-top:1px solid #3a3f48;margin:28px 0}a.l{color:#6ea8fe}
+#tb{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));background:rgba(224,80,156,.92);padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;z-index:9}
+</style>
+</head>
+<body>
+<nav class="tabs" role="tablist"><a href="#login" id="tL" role="tab">Login</a><a href="#application" id="tA" role="tab">Create Application</a></nav>
+<div class="hero" role="img" aria-label="Project Kandi"><b>Powering Nostalgia</b></div>
+<main>
+<div class="al" id="al" role="alert" hidden></div>
+<section id="vL">
+  <h1>Log In</h1>
+  <form id="fL" novalidate><input id="lu" placeholder="Username" autocomplete="username" maxlength="20"><input id="lp" type="password" placeholder="Password" autocomplete="current-password" maxlength="64"><input id="lc" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" hidden><button class="btn" id="bL">Log In</button></form>
+  <hr><h2>How do I make an account?</h2><p class="c">You need to fill out a quick application. This is done to prevent bots and other malicious players from joining. Click the button below to fill out an application.</p><p class="c"><a class="btn" href="#application">Create Application</a></p>
+</section>
+<section id="vA" hidden>
+  <h1>Application</h1><p class="c mu">Your application is checked by our Discord bot. You stay on this screen until you are approved.</p>
+  <form id="fA" novalidate>
+    <div class="st">Step 1 - Account</div><input id="au" placeholder="Username" autocomplete="username" maxlength="20"><input id="ap" type="password" placeholder="Password" autocomplete="new-password" maxlength="64">
+    <div class="st">Step 2 - Verification code</div><p>Join the Kandi Discord server and change your <b>server nickname</b> to the code below. The bot checks it automatically.</p><div class="bx" id="cd">Loading code...</div><p><button class="btn s" type="button" id="nc">New code</button> <a class="l" id="dl" href="#">Open Discord server</a></p>
+    <div class="st">Step 3 - About you (optional)</div><textarea id="ab" maxlength="4000" placeholder="About me (up to 4,000 characters)"></textarea>
+    <div class="st">Step 4 - Referral (optional)</div><input id="rf" placeholder="Referral code" maxlength="40"><p class="mu">The code owner gets 50 Robux and you get 30 Robux (paid by the server).</p>
+    <button class="btn" id="bA">Submit Application</button>
+  </form>
+  <div id="done" hidden><div class="al ok" id="dm"></div><p class="c"><button class="btn" id="cs">Check status</button></p><p class="c mu">Keep your Discord nickname as the code until you are approved.</p></div>
+</section>
+</main>
+<div id="tb" hidden>TEST MODE</div>
+<script src="js/config.js"></script>
+<script src="js/extras.js"></script>
+<script src="js/testdata.js"></script>
+<script src="js/api.js"></script>
+<script src="js/api/auth.js"></script>
+<script>
+(function () {
+  var C = window.KANDI_CONFIG, A = window.KandiAPI, $ = function (i) { return document.getElementById(i); }, code = "";
+  var APP = C.APP_URL || "app.html";
+  if (C.TEST_MODE) $("tb").hidden = false;
+  function say(m, ok) { var a = $("al"); a.textContent = m || ""; a.hidden = !m; a.className = "al" + (ok ? " ok" : ""); }
+  function fail(e) { var f = e.fields && Object.keys(e.fields).map(function (k) { return e.fields[k]; }).join(" "); if (e.data && e.data.twoFactor) $("lc").hidden = false; say(f || e.message || "Something went wrong."); }
+  function view() { var a = location.hash === "#application"; $("vL").hidden = a; $("vA").hidden = !a; $("tL").classList.toggle("on", !a); $("tA").classList.toggle("on", a); say(""); if (a && !code) newCode(); }
+  window.addEventListener("hashchange", view);
+  // TODO(backend): o código TEM que ser gerado e guardado no servidor (ligado ao username), senão o bot não consegue conferir. Formato esperado (NÃO VERIFICADO): { code }.
+  function newCode() { $("cd").textContent = "Loading code..."; A.call("auth.applicationCode", { query: { username: $("au").value.trim() } }).then(function (r) { code = (r && (r.code || r.phrase)) || ""; $("cd").textContent = code || "No code received."; }).catch(function (e) { code = ""; $("cd").textContent = e.kind === "unconnected" ? "Not connected yet: the server will generate your code." : e.message; }); }
+  $("nc").onclick = newCode;
+  var inv = C.DISCORD_INVITE; if (!inv || inv === "#") { $("dl").removeAttribute("href"); $("dl").textContent = "Discord invite not configured yet"; } else $("dl").href = inv;
+  $("fL").onsubmit = function (e) {
+    e.preventDefault(); var u = $("lu").value.trim(), p = $("lp").value; if (!u || !p) { say("Enter your username and password."); return; }
+    say(""); var b = $("bL"); b.disabled = true;
+    A.login({ username: u, password: p, code: $("lc").hidden ? undefined : $("lc").value.trim() }).then(function () { location.href = APP + "#home"; }).catch(fail).then(function () { b.disabled = false; });
+  };
+  $("fA").onsubmit = function (e) {
+    e.preventDefault(); var u = $("au").value.trim(), p = $("ap").value;
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(u)) { say("Username must be 3-20 letters, numbers or underscores."); return; }
+    if (p.length < 6) { say("Password must be at least 6 characters."); return; }
+    if (!code) { say("Wait for the verification code first."); return; }
+    say(""); var b = $("bA"); b.disabled = true;
+    // A senha só vai para o backend; nunca é guardada no navegador.
+    A.call("auth.applyAccount", { body: { username: u, password: p, code: code, about: $("ab").value.trim(), referral: $("rf").value.trim() } }).then(function (r) { $("fA").hidden = true; $("done").hidden = false; $("dm").textContent = (r && r.message) || "Application submitted. Waiting for the bot to verify your nickname."; window.scrollTo(0, 0); }).catch(fail).then(function () { b.disabled = false; });
+  };
+  $("cs").onclick = function () { A.call("auth.applicationStatus", { query: { username: $("au").value.trim() } }).then(function (r) { say((r && r.message) || (r && r.status) || "No status received.", true); }).catch(fail); };
+  view();
+})();
+</script>
+</body>
+</html>

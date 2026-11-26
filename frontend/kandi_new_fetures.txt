@@ -1,0 +1,73 @@
+KANDI - NOVAS FEATURES (frontend pronto, backend NAO conectado)
+Para: Codex / quem for ligar o KSbackend. Tudo abaixo existe so no frontend. Nada foi ligado ao PekoraSource e nenhuma rota foi inventada.
+
+0. COMO LER ESTE PROJETO
+- js/config.js: TEST_MODE = true  -> MODO TESTE: tudo e simulacao local. DEMO e apenas alias de TEST_MODE (codigo antigo ainda le DEMO).
+  Para ligar o backend: TEST_MODE:false, preencher API_BASE/SERVICES/AUTH_MODE/CSRF, depois os caminhos (p) em js/api/*.js. Metodo com p vazio mostra "Not connected yet".
+- Admin: Admin/js/config.js TEST_MODE = true -> acoes do admin sao simuladas. false -> AdminData.perform chama o backend (hoje rejeita com "not connected").
+- MODO TESTE nunca deve ir para producao: o login aceita qualquer usuario/senha, o saldo e falso e escritas "dao certo" sem salvar nada.
+
+1. TELA DE ENTRADA (index.html) - Login | Create Application
+- Quem nao tem sessao NUNCA ve o site rosa: js/extras.js redireciona app.html/creator.html para index.html (so #terms e #privacy ficam abertos).
+  Em modo teste a "sessao" e a chave localStorage kandi_demo_user (criada pelo login simulado). Com TEST_MODE=false o redirecionamento por 401 ja existente cuida disso: CONFIRMAR que o 401 volta para LANDING_URL.
+- Aba Login: usuario + senha (+ codigo 2FA se o servidor pedir). Chama KandiAPI.login (auth.login). Sucesso abre app.html#home.
+- Aba Create Application (fica nessa tela, nao entra no site ate aprovar):
+  1) usuario + senha; 2) codigo de verificacao gerado pelo SERVIDOR (auth.applicationCode) ; 3) about me opcional; 4) referral opcional; "Submit Application" -> auth.applyAccount.
+  Fluxo desejado: a pessoa entra no servidor Discord do Kandi e muda o APELIDO (nickname) no servidor para o codigo. O BOT do Discord confere o apelido e aprova a aplicacao.
+  "Check status" chama auth.applicationStatus.
+- O QUE O BACKEND PRECISA FAZER (nada disso existe no frontend):
+  * gerar o codigo (aleatorio, expira, uso unico) e guardar ligado ao username/aplicacao; o frontend so mostra. Nunca gerar o codigo no navegador.
+  * hash da senha no servidor; o frontend envia a senha so no corpo do POST e nunca guarda.
+  * bot: ler o nickname do membro no servidor, comparar com o codigo, aprovar/recusar e criar a conta. Definir o que acontece se a pessoa sair do servidor, mudar o nome antes do bot ver, ou o codigo expirar.
+  * rate limit / captcha (o antigo passo de captcha nao existe nesta tela: decidir se vai usar).
+- INCERTO / CONFERIR: formato das respostas. Esperado (NAO VERIFICADO): applicationCode -> { code }, applyAccount -> { message? }, applicationStatus -> { status, message }. Campos enviados em applyAccount: username, password, code, about, referral.
+- A tela antiga de aplicacao em app.html#account-application (js/extras.js KandiApplication) ainda existe e usa Discord OAuth/campo Roblox; decidir se remove (o fluxo oficial agora e a aba Create Application de index.html).
+
+2. MODO TESTE / DADOS "Teste"
+- js/testdata.js: fixtures por nome de metodo da API (auth.me, site.home, games.*, catalog.*, groups.*, users.*, inventory.*, economy.transactions...). Tudo se chama "Teste" (Teste Game, Teste Hat, Teste Limited, Teste Group, usuario Teste com 1000 Robux e 500 Tix).
+- js/api.js demoCall: GET -> fixture (ou vazio); escrita (POST/PUT/DELETE) -> { ok:true, simulated:true, message:"Test mode: simulated. Nothing was saved." }. O saldo NAO muda numa compra simulada.
+- Banners "TEST MODE" aparecem no site, no creator, na landing e no admin.
+- CONFERIR: os formatos das fixtures seguem o que js/pages.js le hoje; so um subconjunto de rotas tem fixture. Rotas sem fixture voltam {} (telas vazias).
+- Admin: dados de exemplo em Admin/js/data/demo-data.js (nomes teste_*). Isolados; remover na integracao.
+
+3. COMPRA / JANELAS / NOTIFICACOES (js/extras.js)
+- KandiModal.buy / game / insufficient / processing e KandiNotify.bar (barra verde). Ligados aos botoes Buy (catalog.purchase) e Play (games.join) por "modal":"buy"/"game" em js/routes.js.
+- A barra verde so aparece se a chamada resolver; em modo teste mostra "(test mode, simulated)".
+- Saldo vem de KandiUI.balance() = user.currency. Se o backend usar outro campo, ajustar em js/app.js.
+- Insufficient Funds abre quando saldo < preco no cliente OU o servidor responde 402 / mensagem com "insufficient". CONFERIR o codigo/mensagem real do backend. A validacao verdadeira e do servidor.
+
+4. USER ADS
+- Creator Hub: creator.html#ads (js/creator.js adsPage): lista (ads.mine) + formulario (name, adType banner|skyscraper|rectangle, targetType, targetId, image, bid) via ads.create (multipart FormData). Lance MINIMO 15 Robux (cliente e formulario advertisements/new). O servidor deve cobrar/validar; ads.serve (GET) foi so declarado em js/api/ads.js.
+- NAO FEITO: exibir os anuncios nas paginas do site (faixa "ADVERTISEMENT / Report", ex.: topo das paginas). Ja existe um espaco placeholder em js/app.js (AD). Falta ligar a ads.serve, contar impressoes/cliques e o botao Report.
+- INCERTO: formatos/tamanhos oficiais, rotacao, orcamento total vs lance por clique.
+
+5. REFERRAL
+- Settings > aba Referral (js/routes.js, rota "account"): mostra referral.get {code, uses} e cria codigo via referral.create. Regra: dono do codigo ganha 50 Robux, quem usa ganha 30. O pagamento TEM que ser feito e validado no servidor (anti-fraude: 1 uso por conta, nao usar o proprio codigo).
+- CONFERIR: se a aba aparece bem no schema (blocks "rows" e "form") e os nomes de campo.
+
+6. TECHNICAL ISSUES SCREEN (manutencao)
+- Admin > Technical Issues Screen. Quando ativa, js/extras.js cobre TODO o site (app, creator, index) com assets/tech-issues.jpg (desktop) ou assets/tech-issues-mobile.jpg (retrato). So /Admin escapa (tem senha propria).
+- ESTADO DEMO: a flag fica so no localStorage (kandi_tech_issues_demo) = so vale no navegador de quem ligou. BACKEND: guardar o estado no servidor, expor num endpoint publico leve, e fazer o frontend ler isso em window.KandiTechIssues (js/extras.js). O servidor tambem deveria recusar API de usuarios comuns durante a manutencao.
+- Bloquear so no frontend nao e seguranca.
+
+7. ADMIN (Admin/index.html) - veja ADMIN_FRONTEND_REPORT.md
+- Gate de senha e so visual (KANDYNESSSSSS3 esta no navegador). Trocar pela autenticacao/permissoes reais.
+- Todas as operacoes passam por AdminData.perform(op, payload) (Admin/js/data/admin-data.js). Lista de ops: user.ban/unban/edit/balance, economy.give/reset, assets.publishLink/uploadFile/publishFacePng, hub.approve/reject, promocodes.create/revoke, roles.setPermissions, bans.create/lift, reports.*, groups.lock, forums.*, applications.accept/deny, alerts.*, banner.set, permissions.set, feature-flags.set, usernames.revert, inventory.remove, messages (form).
+- Regras que o SERVIDOR deve impor: membros nunca publicam limiteds; Asset Mod nao mexe em Robux/Tix; so cargos altos editam cargos; eco reset remove SO limiteds, Robux e Tix.
+- Asset Creation: publicar por link do Roblox usa rccservice2020 NO BACKEND (nao existe no frontend); upload de modelo .rbxm/.rbxmx; face classica por PNG (so .png ate 1 MB). Tipo "NGC" foi mantido com o nome pedido: CONFIRMAR o que significa.
+
+8. O QUE FALTOU (nao implementado)
+- Importar arquivo de jogo do Roblox no Creator Hub.
+- Exibir ads nas paginas do site.
+- Banner amarelo publico lendo o valor salvo no admin (hoje usa BANNER de js/config.js).
+- Menus suspensos de download (Studio/Android/Mac/Linux) e links reais de download (DOWNLOADS em js/config.js ainda "#").
+- Captcha real na aplicacao.
+
+9. CHECKLIST DE VERIFICACAO PARA QUEM LIGAR O BACKEND
+[ ] TEST_MODE:false em js/config.js e Admin/js/config.js; conferir que nao sobrou nenhum dado "Teste".
+[ ] Confirmar autenticacao (cookie x token), CSRF, CORS com credenciais.
+[ ] Cada metodo de js/api/*.js: caminho, metodo HTTP, adapt() (formato -> contrato da UI). Ver PEKORA_BACKEND_INTEGRATION.md.
+[ ] Fluxo de aplicacao + bot do Discord (secao 1).
+[ ] Estado da tela de manutencao no servidor (secao 6).
+[ ] Ads (secao 4), referral (secao 5), economia/admin (secao 7) validados no servidor.
+[ ] Rodar python3 tests/smoke.py (32 checks, modo teste + modo real contra stub) e reescrever os que dependem de TEST_MODE.
