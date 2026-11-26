@@ -1,19 +1,19 @@
 // Project Kandi - configuração central. É o único arquivo que você precisa editar para ligar o backend.
 // Nada aqui está confirmado contra o PekoraSource: os campos marcados "NÃO VERIFICADO" devem ser conferidos na integração real.
 window.KANDI_CONFIG = {
-  TEST_MODE: true,         // true = MODO TESTE: nada é real, tudo é simulação local (dados "Teste", ações simuladas, sem rede). false = usa a API abaixo (backend real).
+  TEST_MODE: false,         // true = MODO TESTE: nada é real, tudo é simulação local (dados "Teste", ações simuladas, sem rede). false = usa a API abaixo (backend real).
   USE_STUB: false,         // só com DEMO:false. true = usa a API de teste local do server.py (--mock-api) para os métodos legados. NUNCA é o PekoraSource.
-  API_BASE: "/api",        // NÃO VERIFICADO. Ex.: "https://api.seudominio.com". Com o server.py --mock-api use "/api".
+  API_BASE: "/apisite",        // NÃO VERIFICADO. Ex.: "https://api.seudominio.com". Com o server.py --mock-api use "/api".
   SERVICES: { default: "" },   // URL base por serviço (vazio = usa API_BASE). Ex.: { default: "https://api.seudominio.com", avatar: "https://avatar.seudominio.com" }. Preencher após ler o Program.cs do backend.
-  CSRF: { header: "x-csrf-token", retryStatus: 403 },   // NÃO VERIFICADO: confirmar no backend como o token CSRF é emitido/enviado. Não desative.
+  CSRF: { header: "x-csrf-token", retryStatus: 403 },   // Confirmado em CsrfMiddleware.cs: cookie HttpOnly + header x-csrf-token no desafio 403.
   // Como a sessão é enviada ao backend. NÃO VERIFICADO — definir só depois de ler a autenticação do PekoraSource:
   //   "unset"  (padrão) = não envia credenciais nem Authorization (cross-origin) — chamadas autenticadas vão receber 401.
   //   "cookie" = sessão por cookie (fetch com credentials: include; o backend precisa liberar o CORS com credenciais).
   //   "token"  = Authorization: Bearer <token> guardado no localStorage (menos seguro contra XSS; use só se o backend emitir esse token).
-  AUTH_MODE: "unset",
+  AUTH_MODE: "cookie",
   TOKEN_KEY: "kandi_token",
   // Marque como true SOMENTE depois de confirmar contra o PekoraSource rodando. Só apaga o aviso de integração; não muda o comportamento.
-  CONFIRMED: { api: false, auth: false, csrf: false },
+  CONFIRMED: { api: true, auth: false, csrf: true },
   TIMEOUT_MS: 10000,
   UPLOAD_TIMEOUT_MS: 120000,   // uploads (FormData) podem demorar mais
   PAGE_SIZE: 24,
