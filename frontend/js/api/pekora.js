@@ -62,7 +62,7 @@
       prepare: function (o) {
         var original = Object.assign({}, o.query || {}), pageNo = Math.max(1, +original.page || 1);
         delete original.page;
-        var q = cfg.query ? cfg.query(original, o) : original;
+        var q = cfg.query ? cfg.query(original, o, pageNo) : original;
         q = Object.assign({}, q || {});
         var keyQuery = Object.assign({}, q); delete keyQuery.cursor;
         var key = name + "|" + JSON.stringify(keyQuery);
@@ -73,7 +73,7 @@
       adapt: function (r, o) {
         var original = Object.assign({}, o.query || {}), pageNo = Math.max(1, +original.page || 1);
         delete original.page;
-        var q = cfg.query ? cfg.query(original, o) : original;
+        var q = cfg.query ? cfg.query(original, o, pageNo) : original;
         q = Object.assign({}, q || {});
         var keyQuery = Object.assign({}, q); delete keyQuery.cursor;
         var key = name + "|" + JSON.stringify(keyQuery);
@@ -84,7 +84,7 @@
         var mapped = values.map(cfg.map || row);
         return {
           items: mapped,
-          hasMore: !!next || (values.length >= limit && values.length > 0),
+          hasMore: cfg.noMore ? false : (!!next || (values.length >= limit && values.length > 0)),
           total: r && (typeof r.total === "number" ? r.total : (typeof r.totalCount === "number" ? r.totalCount : undefined))
         };
       }
@@ -133,7 +133,7 @@
     }),
     friends: page("users.friends", "/friends/v1/users/{userId}/friends", "GET", { params: idParams, map: row }),
     groups: page("users.groups", "/groups/v1/users/{userId}/groups/roles", "GET", {
-      params: idParams, items: function (r) { return arr(r, ["data"]); },
+      params: idParams, noMore: true, items: function (r) { return arr(r, ["data"]); },
       map: function (x) { return row(Object.assign({}, x.group || {}, { meta: x.role && x.role.name ? x.role.name : "" })); }
     }),
     badges: page("users.badges", "/badges/v1/users/{userId}/badges", "GET", { params: idParams, map: row }),
@@ -142,7 +142,7 @@
   });
 
   A.define("friends", {
-    list: page("friends.list", "/friends/v1/users/{userId}/friends", "GET", { params: selfParams, map: row }),
+    list: page("friends.list", "/friends/v1/users/{userId}/friends", "GET", { params: selfParams, noMore: true, map: row }),
     request: simple("/friends/v1/users/{userIdToRequest}/request-friendship", "POST", { params: function (p) { return { userIdToRequest: p.userIdToRequest || p.userId || p.id }; } }),
     accept: simple("/friends/v1/users/{userIdToAccept}/accept-friend-request", "POST", { params: function (p) { return { userIdToAccept: p.userIdToAccept || p.userId || p.id || p.rowId }; } }),
     decline: simple("/friends/v1/users/{userIdToDecline}/decline-friend-request", "POST", { params: function (p) { return { userIdToDecline: p.userIdToDecline || p.userId || p.id || p.rowId }; } }),
@@ -152,7 +152,7 @@
 
   A.define("games", {
     search: page("games.search", "/games/v1/games/list", "GET", {
-      query: function (q) { return { sortToken: q.sortToken || q.sort || "popular", maxRows: q.limit || 24, keyword: q.q || q.keyword || undefined }; },
+      query: function (q) { return { sortToken: q.sortToken || q.sort || "popular", maxRows: q.limit || 24, keyword: q.q || q.keyword || undefined }; }, noMore: true,
       items: function (r) { return arr(r, ["games"]); }, map: game
     }),
     get: simple("/games/v1/games", "GET", {
@@ -216,7 +216,7 @@
       map: item
     }),
     outfits: page("avatar.outfits", "/avatar/v1/users/{userId}/outfits", "GET", {
-      params: selfParams, query: function (q) { return { itemsPerPage: q.limit || 20, page: q.page || 1 }; },
+      params: selfParams, query: function (q, o, pageNo) { return { itemsPerPage: q.limit || 20, page: pageNo }; },
       items: function (r) { return arr(r, ["data"]); }, map: row
     }),
     redraw: simple("/avatar/v1/avatar/redraw-thumbnail", "POST"),
@@ -271,7 +271,7 @@
   A.define("messages", {
     unreadCount: simple("/privatemessages/v1/messages/unread/count", "GET"),
     list: page("messages.list", "/privatemessages/v1/messages", "GET", {
-      query: function (q) { return { messageTab: q.type || q.messageTab || "Inbox", pageSize: q.limit || 20, pageNumber: Math.max(0, (+q.page || 1) - 1) }; },
+      query: function (q, o, pageNo) { return { messageTab: q.type || q.messageTab || "Inbox", pageSize: q.limit || 20, pageNumber: pageNo - 1 }; },
       items: function (r) { return arr(r, ["collection", "data", "messages"]); }, map: row
     }),
     get: simple("/privatemessages/v1/messages/{messageId}", "GET", { params: function (p) { return { messageId: p.messageId || p.id }; }, adapt: function (x) { return row({ id: x.id, name: x.subject, subtitle: x.body, meta: x.sender && x.sender.name }); } }),
@@ -311,4 +311,19 @@
     games: page("thumbnails.games", "/thumbnails/v1/games/icons", "GET", { query: function (q,o) { return { universeIds: (o.params && (o.params.id || o.params.universeId)) || q.universeIds || "" }; }, items: function (r) { return arr(r, ["data"]); }, map: function (x) { return row({ id: x.targetId, name: "Game thumbnail", thumbnail: x.imageUrl }); } }),
     users: page("thumbnails.users", "/thumbnails/v1/users/avatar-headshot", "GET", { query: function (q,o) { return { userIds: (o.params && (o.params.id || o.params.userId)) || q.userIds || "" }; }, items: function (r) { return arr(r, ["data"]); }, map: function (x) { return row({ id: x.targetId, name: "User thumbnail", thumbnail: x.imageUrl }); } })
   });
+
+  A.define("badges", {
+    mine: page("badges.mine", "/badges/v1/users/{userId}/badges", "GET", { params: selfParams, map: row })
+  });
+
+  A.define("membership", {
+    get: simple("/premiumfeatures/v1/users/{userId}/subscriptions", "GET", { params: selfParams })
+  });
+
+  A.define("site", {
+    announcements: simple("/privatemessages/v1/announcements", "GET", {
+      adapt: function (r) { return { items: arr(r, ["collection", "data"]), total: r && r.totalCollectionSize || 0 }; }
+    })
+  });
+
 })();
