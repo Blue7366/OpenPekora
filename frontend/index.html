@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project Kandi</title>
+<meta name="description" content="Project Kandi. Powering Nostalgia.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/favicon-192.png">
+<meta property="og:type" content="website"><meta property="og:title" content="Project Kandi"><meta property="og:description" content="Project Kandi. Powering Nostalgia.">
+<!-- TODO: og:image/twitter:image precisam de URL absoluta do domínio final (ex.: https://SEU-DOMINIO/assets/og-image.jpg) para a prévia funcionar em redes sociais. -->
+<meta property="og:image" content="assets/og-image.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="assets/og-image.jpg">
+<style>
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%}
+body{background:#202328;color:#fff;font:15px/1.5 Roboto,"Segoe UI",Arial,sans-serif;-webkit-text-size-adjust:100%}
+.tabs{position:sticky;top:0;z-index:5;display:flex;background:#2b2f36;border-bottom:1px solid #3a3f48;padding-top:env(safe-area-inset-top,0px)}
+.tabs a{flex:1;text-align:center;padding:15px 8px;color:#b9bec7;font-weight:500;text-decoration:none;border-bottom:3px solid transparent}.tabs a.on{color:#fff;border-color:#e0509c}
+.hero{position:relative;height:min(52vw,420px);min-height:210px;background:#111 url(assets/og-image.jpg) center/cover}.hero b{position:absolute;left:16px;bottom:14px;font-size:clamp(30px,8vw,56px);text-shadow:0 2px 10px #000}
+main{max-width:520px;margin:0 auto;padding:24px 18px 60px}h1,h2{font-weight:500;margin:0 0 12px;text-align:center}h2{font-size:21px}
+p{margin:8px 0}.mu{color:#aeb4bd;font-size:13px}form{display:flex;flex-direction:column;gap:12px}label{font-weight:500}
+input,textarea{width:100%;background:#fff;color:#222;border:1px solid #ccc;border-radius:4px;padding:11px;font:inherit}textarea{min-height:90px}
+.btn{border:0;border-radius:4px;background:#0d6efd;color:#fff;padding:12px 16px;font:500 16px Roboto,Arial;cursor:pointer;text-align:center;text-decoration:none;display:inline-block}.btn:disabled{opacity:.55;cursor:default}.btn.s{padding:6px 12px;font-size:13px}
+.bx{background:#cfe3ff;color:#16345c;padding:12px;border-radius:4px;word-break:break-all;font-weight:500}.al{padding:10px 12px;border-radius:4px;background:#5a2330;border:1px solid #a1213a;margin-bottom:12px}.al.ok{background:#1e4a33;border-color:#2f8f5b}
+.st{margin:26px 0 8px;font-size:18px;font-weight:500}.c{text-align:center}hr{border:0;border-top:1px solid #3a3f48;margin:28px 0}a.l{color:#6ea8fe}
+#tb{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));background:rgba(224,80,156,.92);padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;z-index:9}
+</style>
+</head>
+<body>
+<nav class="tabs" role="tablist"><a href="#login" id="tL" role="tab">Login</a><a href="#application" id="tA" role="tab">Create Application</a></nav>
+<div class="hero" role="img" aria-label="Project Kandi"><b>Powering Nostalgia</b></div>
+<main>
+<div class="al" id="al" role="alert" hidden></div>
+<section id="vL">
+  <h1>Welcome to Kandi</h1>
+  <p class="c">Entre com sua conta Pekora. O sistema original continuará responsável pela senha, captcha, autenticação de dois fatores e criação de sessão.</p>
+  <p class="c"><a class="btn" href="/auth/accountlogin">Log In</a></p>
+  <hr><h2>New here?</h2>
+  <p class="c">O cadastro e a aprovação continuam seguindo o processo oficial do backend Pekora.</p>
+  <p class="c"><a class="btn" href="/auth/application">Create Application</a></p>
+</section>
+<section id="vA" hidden>
+  <h1>Account Application</h1>
+  <p class="c">A inscrição é processada pelo backend Pekora, incluindo suas verificações e regras de aprovação.</p>
+  <p class="c"><a class="btn" href="/auth/application">Continue to Application</a></p>
+  <p class="c"><a class="l" href="/auth/accountlogin">Already have an account? Log in</a></p>
+</section>
+</main>
+<div id="tb" hidden>TEST MODE</div>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/api/auth.js"></script>
+<script>
+(function () {
+  function view() {
+    var app = location.hash === "#application";
+    document.getElementById("vL").hidden = app;
+    document.getElementById("vA").hidden = !app;
+    document.getElementById("tL").classList.toggle("on", !app);
+    document.getElementById("tA").classList.toggle("on", app);
+  }
+  window.addEventListener("hashchange", view);
+  view();
+  // Existing Pekora sessions go straight to the Kandi app; anonymous visitors see this landing page.
+  if (window.KandiAPI) window.KandiAPI.me().then(function () { location.replace("app.html#home"); }).catch(function (e) { if (e && e.kind === "format") location.replace("/auth/application"); });
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,3 @@
-api/public
 api/storage
 api/node_modules
 Roblox/**/bin
@@ -9,4 +8,8 @@ admin/node_modules
 AssetValidationService
 deployment
 economy-chat
-game-server
+
+# Not needed by the ASP.NET website containergame-renderer
+RCCService
+game-server/src
+game-server/tests

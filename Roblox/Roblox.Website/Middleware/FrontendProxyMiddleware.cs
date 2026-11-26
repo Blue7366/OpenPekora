@@ -23,8 +23,11 @@ public class FrontendProxyMiddleware
 
     public static List<string> BypassUrls = new()
     {
+        // Pekora JSON API controllers must be handled by ASP.NET, never by the legacy frontend proxy.
+        "/apisite/",
         "/apisite/",
         "/swagger/",
+        "/health",
         "/api/",
         "/api/economy-chat/",
         // Razor Files
@@ -115,7 +118,13 @@ public class FrontendProxyMiddleware
 
     private async Task<HttpResponseMessage> ProxyRequestAsync(HttpContext ctx, string url)
     {
-        var fullUrl = "http://localhost:3000" + url;
+        var frontendBaseUrl = Environment.GetEnvironmentVariable("FRONTEND_PROXY_BASE_URL")
+            ?? "http://localhost:3000";
+        if (!Uri.TryCreate(frontendBaseUrl, UriKind.Absolute, out var baseUri) ||
+            (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+            throw new InvalidOperationException("FRONTEND_PROXY_BASE_URL must be a valid HTTP(S) URL.");
+
+        var safeUrl = new Uri(baseUri.ToString().TrimEnd('/') + "/" + url.TrimStart('/'));
         /* Emi Honey Pot
         if(url.Contains("users/484")){
             if(ctx.Request.Cookies[".ROBLOSECURITY"].ToString() != null)
@@ -124,12 +133,6 @@ public class FrontendProxyMiddleware
             }
         }
         */
-
-        var safeUrl = new Uri(fullUrl);
-        if (safeUrl.Port != 3000)
-            throw new ArgumentException("Unsafe Url: " + fullUrl);
-        if (safeUrl.Host != "localhost")
-            throw new ArgumentException("Unsafe Url: " + fullUrl);
 
         var result = await _httpClient.GetAsync(safeUrl);
         return result;
@@ -225,7 +228,15 @@ public class FrontendProxyMiddleware
         }
     #endif
 
-        // Make a proxy request
+        // The unified deployment serves Kandi from local static files. Keep the old proxy
+        // available only when explicitly configured for a legacy external frontend.
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("FRONTEND_PROXY_BASE_URL")))
+        {
+            await _next(ctx);
+            return;
+        }
+
+        // Make a proxy request only for an explicitly configured legacy frontend.
         var result = await ProxyRequestAsync(ctx, requestUrl);
         var resultStream = await result.Content.ReadAsStreamAsync();
 

@@ -15,11 +15,10 @@ var domain = AppDomain.CurrentDomain;
 // Set a timeout interval of 5 seconds.
 domain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(5));
 
-IConfiguration configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
-    .Build();
-
 var builder = WebApplication.CreateBuilder(args);
+// Render injects configuration through environment variables. ASP.NET Core maps
+// double underscores (__) to nested configuration keys.
+IConfiguration configuration = builder.Configuration;
 
 // DB
 Roblox.Services.Database.Configure(configuration.GetSection("Postgres").Value!);
@@ -58,7 +57,10 @@ Roblox.Configuration.GameServerIp = configuration.GetSection("GameServerIp").Val
 Roblox.Configuration.UserAgentBypassSecret = configuration.GetSection("UserAgentBypassSecret").Value!;
 Roblox.Configuration.VerificationSecret = configuration.GetSection("VerificationSecret").Value!;
 Roblox.Configuration.LuaScriptsDirectory = configuration.GetSection("Directories:RCCLuaScripts").Value!;
-IConfiguration gameServerConfig = new ConfigurationBuilder().AddJsonFile("game-servers.json").Build();
+IConfiguration gameServerConfig = new ConfigurationBuilder()
+    .AddJsonFile("game-servers.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
 Roblox.Configuration.GameServerIpAddresses = gameServerConfig.GetSection("GameServers").Get<IEnumerable<GameServerConfigEntry>>()!;
 Roblox.Configuration.AssetValidationServiceUrl =
     configuration.GetSection("AssetValidation:BaseUrl").Value!;
@@ -120,6 +122,21 @@ builder.Services.AddMvc(c =>
 
 var app = builder.Build();
 app.UseRouting();
+
+// Project Kandi is served by the same ASP.NET Core application as the Pekora backend.
+// This keeps the browser on one origin so the existing Pekora session and CSRF cookies work.
+var kandiFrontendPath = Path.Combine(builder.Environment.ContentRootPath, "frontend");
+if (Directory.Exists(kandiFrontendPath))
+{
+    var kandiFiles = new PhysicalFileProvider(kandiFrontendPath);
+    app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = kandiFiles });
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = kandiFiles,
+        RequestPath = "",
+    });
+}
+
 app.UseSwaggerUI(c =>
 {
     c.ShowCommonExtensions();
@@ -224,4 +241,6 @@ app.MapRazorPages();
 app.UseWebSockets();
 app.UseRequestDecompression();
 app.MapHub<MessageRouterHub>("/v1/router/signalr");
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/home", () => Results.Redirect("/app.html#home"));
 app.Run();
